@@ -77,7 +77,7 @@ h6,
 }
 
 p {
-  margin: 1em 0;
+  margin: 3em 0;
 }
 
 * > p:first-child {
@@ -284,7 +284,6 @@ footer.entry-meta {
 }
 .entry-title {
   color: #444;
-  margin-top: 10px;
   margin-bottom: 30px;
 }
 .page .entry-title {
@@ -319,7 +318,7 @@ article.post:first-child .post-inner-content {
 .entry-title {
   font-family: "Lora", serif;
   font-style: italic;
-  margin-top: 5px;
+  margin-top: 0;
   margin-bottom: 15px;
 }
 .entry-footer {
