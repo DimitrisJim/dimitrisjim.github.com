@@ -2,8 +2,8 @@ body {
   color: #696969;
   background-color: #FFFFFF;
   word-wrap: break-word;
-  font-family: 'Lora', serif;
-  line-height: 2;
+  font-family: 'Maven Pro', serif;
+  line-height: 2.3;
   font-size: 1.8em;
 }
 
@@ -43,7 +43,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 }
 
 .container {
-  max-width: 1090px;
+  max-width: 900px;
 }
 
 h1,
@@ -77,7 +77,8 @@ h6,
 }
 
 p {
-  margin: 3em 0;
+  margin: 1em 0;
+  line-height: 1.3;
 }
 
 * > p:first-child {
