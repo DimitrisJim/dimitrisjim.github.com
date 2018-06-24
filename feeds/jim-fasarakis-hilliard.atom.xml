@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Couldn't be buggered - Jim Fasarakis-Hilliard</title><link href="https://dimitrisjim.github.io/" rel="alternate"></link><link href="https://dimitrisjim.github.io/feeds/jim-fasarakis-hilliard.atom.xml" rel="self"></link><id>https://dimitrisjim.github.io/</id><updated>2017-07-03T00:00:00+03:00</updated><entry><title>Hello, Pelican!</title><link href="https://dimitrisjim.github.io/hello-pelican.html" rel="alternate"></link><published>2017-07-03T00:00:00+03:00</published><updated>2017-07-03T00:00:00+03:00</updated><author><name>Jim Fasarakis-Hilliard</name></author><id>tag:dimitrisjim.github.io,2017-07-03:/hello-pelican.html</id><summary type="html">&lt;p&gt;First, post! Using pelican as the static site generator for my github.io personal page. Let's see how this goes.&lt;/p&gt;</summary><content type="html">&lt;p&gt;Granted that &lt;code&gt;stork = 'pelican'&lt;/code&gt; then, the stork has arrived with my blog.
-I finally got through to setting up something I like that is also Python based.
-Pelican, along with a nice little theme called voce, is powering up this place.&lt;/p&gt;
-&lt;p&gt;Let's see that code-snippet:&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Couldn't be buggered - Jim Fasarakis-Hilliard</title><link href="https://dimitrisjim.github.io/" rel="alternate"></link><link href="https://dimitrisjim.github.io/feeds/jim-fasarakis-hilliard.atom.xml" rel="self"></link><id>https://dimitrisjim.github.io/</id><updated>2018-06-24T00:00:00+03:00</updated><entry><title>Python Easter Eggs</title><link href="https://dimitrisjim.github.io/python-easter-eggs.html" rel="alternate"></link><published>2018-06-24T00:00:00+03:00</published><updated>2018-06-24T00:00:00+03:00</updated><author><name>Jim Fasarakis-Hilliard</name></author><id>tag:dimitrisjim.github.io,2018-06-24:/python-easter-eggs.html</id><summary type="html">&lt;p&gt;Some hidden easter eggs found in the CPython implementation of Python.&lt;/p&gt;</summary><content type="html">&lt;p&gt;This is a small list of eggs found so far in the CPython implementation of Python. Do note that all these might not be present in other Python implementations.&lt;/p&gt;
+&lt;p&gt;Feel free to notify me if you find something that isn't here.&lt;/p&gt;
+&lt;h2&gt;What is &lt;code&gt;this&lt;/code&gt;?&lt;/h2&gt;
+&lt;p&gt;Probably the most famous of the bunch is &lt;code&gt;this&lt;/code&gt;. Importing &lt;code&gt;this&lt;/code&gt; will get you the Zen of Python which provides a nice set of rules you can obnoxiously drop on people during code reviews.&lt;/p&gt;
 &lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; this
 The Zen of Python, by Tim Peters
 
@@ -28,6 +28,80 @@ Namespaces are one honking great idea -- let&lt;span style="color: #0000FF"&gt;&
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Keep on testing:&lt;/p&gt;
-&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(&lt;span style="color: #0000FF"&gt;&amp;quot;Hello world&amp;quot;&lt;/span&gt;)
+&lt;p&gt;Go ahead and check out the &lt;a href="https://github.com/python/cpython/blob/master/Lib/this.py"&gt;source for &lt;code&gt;this&lt;/code&gt;&lt;/a&gt;. It uses one of the most well known encryption techniques.&lt;/p&gt;
+&lt;h2&gt;Antigravity!&lt;/h2&gt;
+&lt;p&gt;I won't spoil this, go open your terminal and type:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; antigravity
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;If you're on Python 3, don't close your terminal. There's an additional gem here for you:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;from&lt;/span&gt; antigravity &lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; geohash
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;To find out more about this, see the source of &lt;a href="https://github.com/python/cpython/blob/master/Lib/antigravity.py"&gt;&lt;code&gt;antigravity.py&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;h2&gt;Hello World [...|!]&lt;/h2&gt;
+&lt;p&gt;The output here differs slightly if you run it under Python 2 or Python 3, seems like the Python 3 version is merrier than its Python 2 counterpart:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #008800; font-style: italic"&gt;# Under Python 3&lt;/span&gt;
+&amp;gt;&amp;gt;&amp;gt; &lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; __phello__
+Hello world&lt;span style="color: #a61717; background-color: #e3d2d2"&gt;!&lt;/span&gt;
+&amp;gt;&amp;gt;&amp;gt; &lt;span style="color: #000080; font-weight: bold"&gt;from&lt;/span&gt; __phello__ &lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; spam  &lt;span style="color: #008800; font-style: italic"&gt;# module in package __phello__&lt;/span&gt;
+Hello world&lt;span style="color: #a61717; background-color: #e3d2d2"&gt;!&lt;/span&gt;
+&amp;gt;&amp;gt;&amp;gt; &lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; __hello__
+Hello world&lt;span style="color: #a61717; background-color: #e3d2d2"&gt;!&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;That's a lot of hellowing! Under Python 2, the message uses a trailing ellipsis, how suspenseful:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #008800; font-style: italic"&gt;# Python 2&lt;/span&gt;
+&amp;gt;&amp;gt;&amp;gt; &lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; __hello__
+Hello world...
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;These (&lt;code&gt;__hello__&lt;/code&gt; and &lt;code&gt;__phello__&lt;/code&gt;) are used to test frozen modules/packages from what I've understood.&lt;/p&gt;
+&lt;h2&gt;Brace yourself&lt;/h2&gt;
+&lt;p&gt;This just speaks for itself:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&amp;gt;&amp;gt;&amp;gt; &lt;span style="color: #000080; font-weight: bold"&gt;from&lt;/span&gt; __future__ &lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; braces
+  File &lt;span style="color: #0000FF"&gt;&amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;&lt;/span&gt;, line &lt;span style="color: #0000FF"&gt;1&lt;/span&gt;
+SyntaxError: &lt;span style="font-weight: bold"&gt;not&lt;/span&gt; a chance
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Of course, these are not really needed because Python boasts one of the most &lt;a href="https://www.python.org/doc/humor/#python-block-delimited-notation-parsing-explained"&gt;sophisticated parsers&lt;/a&gt; around.&lt;/p&gt;
+&lt;h2&gt;Friendly Language Uncle For Life&lt;/h2&gt;
+&lt;p&gt;For some of the backstory here, take a look at &lt;a href="https://www.python.org/dev/peps/pep-0401/"&gt;PEP 401&lt;/a&gt;. One of the official acts of the FLUFL was to reinstate the &lt;code&gt;&amp;lt;&amp;gt;&lt;/code&gt; comparison operator which existed in Python 2 and was remove in Python 3:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&amp;gt;&amp;gt;&amp;gt; &lt;span style="color: #0000FF"&gt;1&lt;/span&gt; &amp;lt;&amp;gt; &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;
+  File &lt;span style="color: #0000FF"&gt;&amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;&lt;/span&gt;, line &lt;span style="color: #0000FF"&gt;1&lt;/span&gt;
+    &lt;span style="color: #0000FF"&gt;1&lt;/span&gt; &amp;lt;&amp;gt; &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;
+       ^
+SyntaxError: invalid syntax
+&amp;gt;&amp;gt;&amp;gt; &lt;span style="color: #000080; font-weight: bold"&gt;from&lt;/span&gt; __future__ &lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; barry_as_FLUFL
+&amp;gt;&amp;gt;&amp;gt; &lt;span style="color: #0000FF"&gt;1&lt;/span&gt; &amp;lt;&amp;gt; &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;
+True
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Don't do this.&lt;/p&gt;</content><category term="Python"></category><category term="CPython"></category></entry><entry><title>Hello, Pelican!</title><link href="https://dimitrisjim.github.io/hello-pelican.html" rel="alternate"></link><published>2017-07-03T00:00:00+03:00</published><updated>2017-07-03T00:00:00+03:00</updated><author><name>Jim Fasarakis-Hilliard</name></author><id>tag:dimitrisjim.github.io,2017-07-03:/hello-pelican.html</id><summary type="html">&lt;p&gt;First, post! Using pelican as the static site generator for my github.io personal page. Let's see how this goes.&lt;/p&gt;</summary><content type="html">&lt;p&gt;Granted that &lt;code&gt;stork = 'pelican'&lt;/code&gt; then, the stork has arrived with my blog.
+I finally got through to setting up something I like that is also Python based.
+Pelican, along with a nice little theme called voce, is powering up this place.&lt;/p&gt;
+&lt;p&gt;Let's see that code-snippet:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;class&lt;/span&gt; MyMeta(type):
+    &lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; __new__(cls, name, bases, namespace):
+        my_fancy_new_namespace = {....}
+        &lt;span style="color: #000080; font-weight: bold"&gt;if&lt;/span&gt; &lt;span style="color: #0000FF"&gt;&amp;#39;__classcell__&amp;#39;&lt;/span&gt; &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; namespace:
+             my_fancy_new_namespace[&lt;span style="color: #0000FF"&gt;&amp;#39;__classcell__&amp;#39;&lt;/span&gt;] = namespace[&lt;span style="color: #0000FF"&gt;&amp;#39;__classcell__&amp;#39;&lt;/span&gt;]
+        &lt;span style="color: #000080; font-weight: bold"&gt;return&lt;/span&gt; super().__new__(cls, name, bases, my_fancy_new_namespace)
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Some simple disassembly:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;from&lt;/span&gt; dis &lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; dis
+dis(func)
+  &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;           &lt;span style="color: #0000FF"&gt;0&lt;/span&gt; LOAD_CONST               &lt;span style="color: #0000FF"&gt;1&lt;/span&gt; (&lt;span style="color: #0000FF"&gt;42&lt;/span&gt;)
+              &lt;span style="color: #0000FF"&gt;2&lt;/span&gt; STORE_FAST               &lt;span style="color: #0000FF"&gt;0&lt;/span&gt; (a)
+
+  &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;           &lt;span style="color: #0000FF"&gt;4&lt;/span&gt; LOAD_FAST                &lt;span style="color: #0000FF"&gt;0&lt;/span&gt; (a)
+              &lt;span style="color: #0000FF"&gt;6&lt;/span&gt; RETURN_VALUE
 &lt;/pre&gt;&lt;/div&gt;</content><category term="Misc"></category></entry></feed>

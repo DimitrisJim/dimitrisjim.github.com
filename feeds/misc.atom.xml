@@ -3,31 +3,21 @@
 I finally got through to setting up something I like that is also Python based.
 Pelican, along with a nice little theme called voce, is powering up this place.&lt;/p&gt;
 &lt;p&gt;Let's see that code-snippet:&lt;/p&gt;
-&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; this
-The Zen of Python, by Tim Peters
-
-Beautiful &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; better than ugly.
-Explicit &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; better than implicit.
-Simple &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; better than complex.
-Complex &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; better than complicated.
-Flat &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; better than nested.
-Sparse &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; better than dense.
-Readability counts.
-Special cases aren&lt;span style="color: #0000FF"&gt;&amp;#39;t special enough to break the rules.&lt;/span&gt;
-Although practicality beats purity.
-Errors should never &lt;span style="color: #000080; font-weight: bold"&gt;pass&lt;/span&gt; silently.
-Unless explicitly silenced.
-In the face of ambiguity, refuse the temptation to guess.
-There should be one-- &lt;span style="font-weight: bold"&gt;and&lt;/span&gt; preferably only one --obvious way to do it.
-Although that way may &lt;span style="font-weight: bold"&gt;not&lt;/span&gt; be obvious at first unless you&lt;span style="color: #0000FF"&gt;&amp;#39;re Dutch.&lt;/span&gt;
-Now &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; better than never.
-Although never &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; often better than *right* now.
-If the implementation &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; hard to explain, it&lt;span style="color: #0000FF"&gt;&amp;#39;s a bad idea.&lt;/span&gt;
-If the implementation &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; easy to explain, it may be a good idea.
-Namespaces are one honking great idea -- let&lt;span style="color: #0000FF"&gt;&amp;#39;s do more of those!&lt;/span&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;class&lt;/span&gt; MyMeta(type):
+    &lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; __new__(cls, name, bases, namespace):
+        my_fancy_new_namespace = {....}
+        &lt;span style="color: #000080; font-weight: bold"&gt;if&lt;/span&gt; &lt;span style="color: #0000FF"&gt;&amp;#39;__classcell__&amp;#39;&lt;/span&gt; &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; namespace:
+             my_fancy_new_namespace[&lt;span style="color: #0000FF"&gt;&amp;#39;__classcell__&amp;#39;&lt;/span&gt;] = namespace[&lt;span style="color: #0000FF"&gt;&amp;#39;__classcell__&amp;#39;&lt;/span&gt;]
+        &lt;span style="color: #000080; font-weight: bold"&gt;return&lt;/span&gt; super().__new__(cls, name, bases, my_fancy_new_namespace)
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Keep on testing:&lt;/p&gt;
-&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(&lt;span style="color: #0000FF"&gt;&amp;quot;Hello world&amp;quot;&lt;/span&gt;)
+&lt;p&gt;Some simple disassembly:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;from&lt;/span&gt; dis &lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; dis
+dis(func)
+  &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;           &lt;span style="color: #0000FF"&gt;0&lt;/span&gt; LOAD_CONST               &lt;span style="color: #0000FF"&gt;1&lt;/span&gt; (&lt;span style="color: #0000FF"&gt;42&lt;/span&gt;)
+              &lt;span style="color: #0000FF"&gt;2&lt;/span&gt; STORE_FAST               &lt;span style="color: #0000FF"&gt;0&lt;/span&gt; (a)
+
+  &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;           &lt;span style="color: #0000FF"&gt;4&lt;/span&gt; LOAD_FAST                &lt;span style="color: #0000FF"&gt;0&lt;/span&gt; (a)
+              &lt;span style="color: #0000FF"&gt;6&lt;/span&gt; RETURN_VALUE
 &lt;/pre&gt;&lt;/div&gt;</content><category term="Misc"></category></entry></feed>

@@ -5,42 +5,49 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>https://dimitrisjim.github.io/</loc>
-<lastmod>2018-06-23T17:06:56-00:00</lastmod>
+<lastmod>2018-06-24T22:03:00-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>https://dimitrisjim.github.io/archives.html</loc>
-<lastmod>2018-06-23T17:06:56-00:00</lastmod>
+<lastmod>2018-06-24T22:03:00-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>https://dimitrisjim.github.io/tags.html</loc>
-<lastmod>2018-06-23T17:06:56-00:00</lastmod>
+<lastmod>2018-06-24T22:03:00-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>https://dimitrisjim.github.io/categories.html</loc>
-<lastmod>2018-06-23T17:06:56-00:00</lastmod>
+<lastmod>2018-06-24T22:03:00-00:00</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>https://dimitrisjim.github.io/pages/the-spanish-inquisition.html</loc>
-<lastmod>2018-06-23T17:06:56-00:00</lastmod>
+<lastmod>2018-06-24T22:03:00-00:00</lastmod>
 <changefreq>monthly</changefreq>
 <priority>0.5</priority>
 </url>
 
 <url>
 <loc>https://dimitrisjim.github.io/pages/about-me.html</loc>
-<lastmod>2018-06-23T17:06:56-00:00</lastmod>
+<lastmod>2018-06-24T22:03:00-00:00</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>https://dimitrisjim.github.io/python-easter-eggs.html</loc>
+<lastmod>2018-06-24T00:00:00+03:00</lastmod>
 <changefreq>monthly</changefreq>
 <priority>0.5</priority>
 </url>
@@ -60,6 +67,27 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </url>
 
 <url>
+<loc>https://dimitrisjim.github.io/category/python-easter-eggs.html</loc>
+<lastmod>2018-06-24T00:00:00+01:35</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>https://dimitrisjim.github.io/tag/python.html</loc>
+<lastmod>2018-06-24T00:00:00+01:35</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
+<loc>https://dimitrisjim.github.io/tag/cpython.html</loc>
+<lastmod>2018-06-24T00:00:00+01:35</lastmod>
+<changefreq>daily</changefreq>
+<priority>0.5</priority>
+</url>
+
+<url>
 <loc>https://dimitrisjim.github.io/tag/misc.html</loc>
 <lastmod>2017-07-03T00:00:00+01:35</lastmod>
 <changefreq>daily</changefreq>
@@ -68,7 +96,7 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 <url>
 <loc>https://dimitrisjim.github.io/author/jim-fasarakis-hilliard.html</loc>
-<lastmod>2017-07-03T00:00:00+01:35</lastmod>
+<lastmod>2018-06-24T00:00:00+01:35</lastmod>
 <changefreq>daily</changefreq>
 <priority>0.5</priority>
 </url>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Couldn't be buggered</title><link href="https://dimitrisjim.github.io/" rel="alternate"></link><link href="https://dimitrisjim.github.io/feeds/all-en.atom.xml" rel="self"></link><id>https://dimitrisjim.github.io/</id><updated>2018-06-24T00:00:00+03:00</updated><entry><title>Python Easter Eggs</title><link href="https://dimitrisjim.github.io/python-easter-eggs.html" rel="alternate"></link><published>2018-06-24T00:00:00+03:00</published><updated>2018-06-24T00:00:00+03:00</updated><author><name>Jim Fasarakis-Hilliard</name></author><id>tag:dimitrisjim.github.io,2018-06-24:/python-easter-eggs.html</id><summary type="html">&lt;p&gt;Some hidden easter eggs found in the CPython implementation of Python.&lt;/p&gt;</summary><content type="html">&lt;p&gt;This is a small list of eggs found so far in the CPython implementation of Python. Do note that all these might not be present in other Python implementations.&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Couldn't be buggered - Python, Easter, Eggs</title><link href="https://dimitrisjim.github.io/" rel="alternate"></link><link href="https://dimitrisjim.github.io/feeds/python-easter-eggs.atom.xml" rel="self"></link><id>https://dimitrisjim.github.io/</id><updated>2018-06-24T00:00:00+03:00</updated><entry><title>Python Easter Eggs</title><link href="https://dimitrisjim.github.io/python-easter-eggs.html" rel="alternate"></link><published>2018-06-24T00:00:00+03:00</published><updated>2018-06-24T00:00:00+03:00</updated><author><name>Jim Fasarakis-Hilliard</name></author><id>tag:dimitrisjim.github.io,2018-06-24:/python-easter-eggs.html</id><summary type="html">&lt;p&gt;Some hidden easter eggs found in the CPython implementation of Python.&lt;/p&gt;</summary><content type="html">&lt;p&gt;This is a small list of eggs found so far in the CPython implementation of Python. Do note that all these might not be present in other Python implementations.&lt;/p&gt;
 &lt;p&gt;Feel free to notify me if you find something that isn't here.&lt;/p&gt;
 &lt;h2&gt;What is &lt;code&gt;this&lt;/code&gt;?&lt;/h2&gt;
 &lt;p&gt;Probably the most famous of the bunch is &lt;code&gt;this&lt;/code&gt;. Importing &lt;code&gt;this&lt;/code&gt; will get you the Zen of Python which provides a nice set of rules you can obnoxiously drop on people during code reviews.&lt;/p&gt;
@@ -83,25 +83,4 @@ True
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Don't do this.&lt;/p&gt;</content><category term="Python"></category><category term="CPython"></category></entry><entry><title>Hello, Pelican!</title><link href="https://dimitrisjim.github.io/hello-pelican.html" rel="alternate"></link><published>2017-07-03T00:00:00+03:00</published><updated>2017-07-03T00:00:00+03:00</updated><author><name>Jim Fasarakis-Hilliard</name></author><id>tag:dimitrisjim.github.io,2017-07-03:/hello-pelican.html</id><summary type="html">&lt;p&gt;First, post! Using pelican as the static site generator for my github.io personal page. Let's see how this goes.&lt;/p&gt;</summary><content type="html">&lt;p&gt;Granted that &lt;code&gt;stork = 'pelican'&lt;/code&gt; then, the stork has arrived with my blog.
-I finally got through to setting up something I like that is also Python based.
-Pelican, along with a nice little theme called voce, is powering up this place.&lt;/p&gt;
-&lt;p&gt;Let's see that code-snippet:&lt;/p&gt;
-&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;class&lt;/span&gt; MyMeta(type):
-    &lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; __new__(cls, name, bases, namespace):
-        my_fancy_new_namespace = {....}
-        &lt;span style="color: #000080; font-weight: bold"&gt;if&lt;/span&gt; &lt;span style="color: #0000FF"&gt;&amp;#39;__classcell__&amp;#39;&lt;/span&gt; &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; namespace:
-             my_fancy_new_namespace[&lt;span style="color: #0000FF"&gt;&amp;#39;__classcell__&amp;#39;&lt;/span&gt;] = namespace[&lt;span style="color: #0000FF"&gt;&amp;#39;__classcell__&amp;#39;&lt;/span&gt;]
-        &lt;span style="color: #000080; font-weight: bold"&gt;return&lt;/span&gt; super().__new__(cls, name, bases, my_fancy_new_namespace)
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;Some simple disassembly:&lt;/p&gt;
-&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;from&lt;/span&gt; dis &lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; dis
-dis(func)
-  &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;           &lt;span style="color: #0000FF"&gt;0&lt;/span&gt; LOAD_CONST               &lt;span style="color: #0000FF"&gt;1&lt;/span&gt; (&lt;span style="color: #0000FF"&gt;42&lt;/span&gt;)
-              &lt;span style="color: #0000FF"&gt;2&lt;/span&gt; STORE_FAST               &lt;span style="color: #0000FF"&gt;0&lt;/span&gt; (a)
-
-  &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;           &lt;span style="color: #0000FF"&gt;4&lt;/span&gt; LOAD_FAST                &lt;span style="color: #0000FF"&gt;0&lt;/span&gt; (a)
-              &lt;span style="color: #0000FF"&gt;6&lt;/span&gt; RETURN_VALUE
-&lt;/pre&gt;&lt;/div&gt;</content><category term="Misc"></category></entry></feed>
+&lt;p&gt;Don't do this.&lt;/p&gt;</content><category term="Python"></category><category term="CPython"></category></entry></feed>
