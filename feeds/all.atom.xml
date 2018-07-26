@@ -1,5 +1,475 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Couldn't be buggered</title><link href="https://dimitrisjim.github.io/" rel="alternate"></link><link href="https://dimitrisjim.github.io/feeds/all.atom.xml" rel="self"></link><id>https://dimitrisjim.github.io/</id><updated>2018-06-24T00:00:00+03:00</updated><entry><title>Python Easter Eggs</title><link href="https://dimitrisjim.github.io/python-easter-eggs.html" rel="alternate"></link><published>2018-06-24T00:00:00+03:00</published><updated>2018-06-24T00:00:00+03:00</updated><author><name>Jim Fasarakis-Hilliard</name></author><id>tag:dimitrisjim.github.io,2018-06-24:/python-easter-eggs.html</id><summary type="html">&lt;p&gt;Some hidden easter eggs found in the CPython implementation of Python.&lt;/p&gt;</summary><content type="html">&lt;p&gt;This is a small list of eggs found so far in the CPython implementation of Python. Do note that all these might not be present in other Python implementations.&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Couldn't be buggered</title><link href="https://dimitrisjim.github.io/" rel="alternate"></link><link href="https://dimitrisjim.github.io/feeds/all.atom.xml" rel="self"></link><id>https://dimitrisjim.github.io/</id><updated>2018-07-26T00:00:00+03:00</updated><entry><title>Unpacking Unpacking in Python</title><link href="https://dimitrisjim.github.io/python-unpackings-unpacked.html" rel="alternate"></link><published>2018-07-26T00:00:00+03:00</published><updated>2018-07-26T00:00:00+03:00</updated><author><name>Jim Fasarakis-Hilliard</name></author><id>tag:dimitrisjim.github.io,2018-07-26:/python-unpackings-unpacked.html</id><summary type="html">&lt;p&gt;This post describes the operation of unpacking in Python. From function definitions and calls to assignments and displays.&lt;/p&gt;</summary><content type="html">&lt;p&gt;By Python stars, I don't mean multiplication (&lt;code&gt;a*b&lt;/code&gt;), exponentiation (&lt;code&gt;a**b&lt;/code&gt;),
+star imports (&lt;code&gt;import *&lt;/code&gt;) or the bare &lt;code&gt;*&lt;/code&gt; in function definitions for
+&lt;a href="https://www.python.org/dev/peps/pep-3102/"&gt;keyword only arguments&lt;/a&gt;. This is about using &lt;code&gt;*&lt;/code&gt; with &lt;em&gt;iterables&lt;/em&gt; and &lt;code&gt;**&lt;/code&gt;
+with &lt;em&gt;mappings&lt;/em&gt; in the, as will become clearer, context of assignments.&lt;/p&gt;
+&lt;p&gt;This post assumes using a recent Python version (&lt;code&gt;Python 3.6.4&lt;/code&gt; on my machine). Also, since this is the best place to say this: Don't use Python 2 in &lt;em&gt;new&lt;/em&gt; projects, get to the &lt;code&gt;__future__&lt;/code&gt; and let 2.7 die in peace.&lt;/p&gt;
+&lt;h2&gt;Terminology&lt;/h2&gt;
+&lt;p&gt;First, some terminology is needed for &lt;em&gt;Iterable&lt;/em&gt;, &lt;em&gt;Mapping&lt;/em&gt; and &lt;em&gt;Unpacking&lt;/em&gt;. Since iterable is really short, I'll just dump a quote here:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;Iterable&lt;/strong&gt;: An object capable of returning its members one at a time.
+Pythons' built-in sequences (like &lt;code&gt;list&lt;/code&gt;, &lt;code&gt;tuple&lt;/code&gt;, &lt;code&gt;str&lt;/code&gt;), sets and
+mappings are all iterable. Any user defined class can also become
+iterable by &lt;a href="https://docs.python.org/3/library/stdtypes.html#iterator-types"&gt;implementing the appropriate special methods&lt;/a&gt;.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Similarly, using the &lt;a href="https://docs.python.org/3/glossary.html"&gt;Python Glossary&lt;/a&gt;, we find that mapping is:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;A container object that supports arbitrary key look-ups and implements the methods specified in the Mapping or MutableMapping abstract base classes. Examples include dict, collections.defaultdict, collections.OrderedDict and collections.Counter.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Basically, it's a collection of distinct key to value pairs that implements &lt;code&gt;__contains__&lt;/code&gt;, &lt;code&gt;keys&lt;/code&gt;, &lt;code&gt;items&lt;/code&gt;, &lt;code&gt;values&lt;/code&gt;, &lt;code&gt;get&lt;/code&gt;, &lt;code&gt;__eq__&lt;/code&gt;, and &lt;code&gt;__ne__&lt;/code&gt;. You shouldn't care much for these methods for now.&lt;/p&gt;
+&lt;h3&gt;Unpacking&lt;/h3&gt;
+&lt;p&gt;Unpacking is a wee bit trickier. The problem is that the term &lt;em&gt;unpacking&lt;/em&gt; is overloaded IMHO; it's used to describe two related but &lt;em&gt;different operations&lt;/em&gt;.&lt;/p&gt;
+&lt;h4&gt;Unpacking on RHS of assignments&lt;/h4&gt;
+&lt;p&gt;The first operation, for which the term unpacking makes sense to me, is on the &lt;em&gt;Right Hand Side&lt;/em&gt; (RHS) of an assignment; this is commonly found in function &lt;em&gt;calls&lt;/em&gt;:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; spam(a, b):
+  &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(a, b)
+l = [&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;]
+spam(*l)
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;A function call is basically an implicit assignment of the call arguments (RHS) to the function parameters (LHS) followed by an execution of the function body.&lt;/p&gt;
+&lt;p&gt;Here, we unpack the contents of the iterable &lt;code&gt;l&lt;/code&gt; (a list) and get them assigned to the parameters &lt;code&gt;a&lt;/code&gt; and &lt;code&gt;b&lt;/code&gt;. &lt;code&gt;[1, 2]&lt;/code&gt; becomes &lt;code&gt;1&lt;/code&gt; and &lt;code&gt;2&lt;/code&gt; basically, equivalent to doing &lt;code&gt;foo(1, 2)&lt;/code&gt;: the iterable &lt;code&gt;l&lt;/code&gt; had its elements &lt;em&gt;unpacked&lt;/em&gt;.&lt;/p&gt;
+&lt;h4&gt;'Unpacking' on LHS of assignments&lt;/h4&gt;
+&lt;p&gt;The second operation, for which the term unpacking doe &lt;em&gt;not&lt;/em&gt; make sense to me, is in the &lt;em&gt;Left Hand Side&lt;/em&gt; (LHS) of an assignment; this is commonly found in function &lt;em&gt;definitions&lt;/em&gt;:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; spam(*args, **kwargs):
+    &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(args, kwargs)
+spam(&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;, a=&lt;span style="color: #0000FF"&gt;4&lt;/span&gt;, b=&lt;span style="color: #0000FF"&gt;5&lt;/span&gt;)
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;&lt;sub&gt;&lt;code&gt;*args&lt;/code&gt; and &lt;code&gt;**kwargs&lt;/code&gt; can be seen as the LHS of the implicit assignment
+that happens with function calls.&lt;/sub&gt;&lt;/p&gt;
+&lt;p&gt;So what's going on here? Using my great detective skills I deduce that it's pretty much the opposite operation than what we had before. Essentially &lt;code&gt;spam(1, 2, 3, a=4, b=5)&lt;/code&gt; is equivalent to calling
+&lt;code&gt;spam((1, 2, 3), {'a': 4, 'b': 5})&lt;/code&gt;. We have &lt;em&gt;packed&lt;/em&gt; the positional arguments in the iterable &lt;code&gt;*args&lt;/code&gt; and the keyword arguments in the mapping &lt;code&gt;**kwargs&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;So I'll make these operations distinct by using the term &lt;strong&gt;packing&lt;/strong&gt; for LHS stars from now on.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;p&gt;As you see, there's a couple of similarities between these: they are both found in assignments and both can use a single star and a double star to unpack/pack respectively. There are a couple of differences too of course:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Positioning: Unpacking is found on the RHS of assignments, Packing on the LHS.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Control: The result of packing items is set in stone by the language. There's no way to alter what the items get packed into unless you alter the Python implementation.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3&gt;Count your stars&lt;/h3&gt;
+&lt;p&gt;Before talking about Unpacking and Packing in more detail, let's get this out of the way.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Any object that is iterable&lt;/em&gt; can be used with a single star &lt;code&gt;*&lt;/code&gt;. This means lists, sets, dictionaries and user defined iterables can be used with &lt;code&gt;*&lt;/code&gt;.
+Yes, dictionaries too; when iterated through dictionaries yield their keys. Trying to use it with an object that isn't iterable gets you shouted at. For
+example, let's try and unpack an &lt;code&gt;int&lt;/code&gt; into a list display:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&amp;gt;&amp;gt;&amp;gt; [*&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;]  &lt;span style="color: #008800; font-style: italic"&gt;# trying to unpack an int&lt;/span&gt;
+Traceback (most recent call last):
+  File &lt;span style="color: #0000FF"&gt;&amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;&lt;/span&gt;, line &lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; &amp;lt;module&amp;gt;
+TypeError: &lt;span style="color: #0000FF"&gt;&amp;#39;int&amp;#39;&lt;/span&gt; object &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; &lt;span style="font-weight: bold"&gt;not&lt;/span&gt; iterable
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Only mappings can use the double star form though. Trying to use anything that
+isn't a map with &lt;code&gt;**&lt;/code&gt; gets you a well earned &lt;code&gt;TypeError&lt;/code&gt;, for example:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&amp;gt;&amp;gt;&amp;gt; {**[]}
+Traceback (most recent call last):
+  File &lt;span style="color: #0000FF"&gt;&amp;quot;&amp;lt;stdin&amp;gt;&amp;quot;&lt;/span&gt;, line &lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; &amp;lt;module&amp;gt;
+TypeError: &lt;span style="color: #0000FF"&gt;&amp;#39;list&amp;#39;&lt;/span&gt; object &lt;span style="font-weight: bold"&gt;is&lt;/span&gt; &lt;span style="font-weight: bold"&gt;not&lt;/span&gt; a mapping
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Don't worry about the syntax, especially if you get a &lt;code&gt;SyntaxError&lt;/code&gt;. I'll explain it later.&lt;/p&gt;
+&lt;h2&gt;Packing&lt;/h2&gt;
+&lt;p&gt;We're gonna start with packing since it's something most people have met. As previously stated, &lt;em&gt;you have no control over what the items are going to get packed into&lt;/em&gt;. This is something the language defines. All you need to know for now is that it's packed into an iterable.&lt;/p&gt;
+&lt;p&gt;We'll break packing down into two cases (because functions are special):&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Function definitions.&lt;/li&gt;
+&lt;li&gt;All other forms of assignment.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Function Definitions&lt;/h3&gt;
+&lt;p&gt;&lt;sup&gt;&lt;strong&gt;Pythons: all&lt;/strong&gt;&lt;/sup&gt;&lt;/p&gt;
+&lt;p&gt;This is the most common and the oldest form of Python star constructs. You'll
+most commonly see them with the names &lt;code&gt;args&lt;/code&gt; and &lt;code&gt;kwargs&lt;/code&gt; in a function definition:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; spam(*args, **kwargs):
+    &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(args, kwargs)
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The names &lt;code&gt;args&lt;/code&gt; and &lt;code&gt;kwargs&lt;/code&gt;, though common, are specified &lt;em&gt;by you&lt;/em&gt; when defining the function. These both existed as far back as &lt;a href="https://docs.python.org/release/1.4/ref/ref7.html#REF27502"&gt;Python 1.4&lt;/a&gt; from what I was able to discover. &lt;strong&gt;Fun fact:&lt;/strong&gt; using an old Python 1.0.1 I had around, &lt;code&gt;*args&lt;/code&gt; works like a charm, &lt;code&gt;**kwargs&lt;/code&gt; leads to a lovely  segmentation fault.&lt;/p&gt;
+&lt;p&gt;So what are these? Looking at the &lt;a href="https://docs.python.org/3/reference/compound_stmts.html#function-definitions"&gt;appropriate section&lt;/a&gt; in the Language Reference we find:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;If the form “&lt;code&gt;*identifier&lt;/code&gt;” is present, it is initialized to a tuple receiving any excess positional parameters, defaulting to the empty tuple. If the form “&lt;code&gt;**identifier&lt;/code&gt;” is present, it is initialized to a new ordered mapping receiving any excess keyword arguments, defaulting to a new empty mapping of the same type.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;As you can see, the language defines what data structure is used; there's no way to change what the values get packed into. Specifically, when we call a function that has been defined with &lt;code&gt;*args&lt;/code&gt; and &lt;code&gt;**kwargs&lt;/code&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;*args&lt;/code&gt;: &lt;code&gt;tuple&lt;/code&gt; receiving &lt;strong&gt;excess&lt;/strong&gt; positional arguments.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;**kwargs&lt;/code&gt;: ordered mapping receiving &lt;strong&gt;excess&lt;/strong&gt; keyword arguments.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;So, when we call &lt;code&gt;spam&lt;/code&gt; with &lt;code&gt;1, 2, 3, foo=30&lt;/code&gt; we expect &lt;code&gt;1, 2, 3&lt;/code&gt; to be packed into the tuple &lt;code&gt;args&lt;/code&gt; while also expecting the mapping &lt;code&gt;kwargs&lt;/code&gt; to have a key &lt;code&gt;foo&lt;/code&gt; with the value &lt;code&gt;30&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;I've boldfaced the word excess in the quoted text because &lt;code&gt;*args&lt;/code&gt; and &lt;code&gt;**kwargs&lt;/code&gt; won't grab anything that can be assigned to positional or keyword parameter that has been defined for a function. For example, this new &lt;code&gt;spam_new&lt;/code&gt; (woah naming conventions) function also defines a positional parameter named &lt;code&gt;spammy&lt;/code&gt; and a keyword argument named &lt;code&gt;spam_key&lt;/code&gt; with a default value. It then prints out everything:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; spam_new(spammy, *args, *, spam_key=&lt;span style="color: #0000FF"&gt;&amp;#39;spam&amp;#39;&lt;/span&gt;, **kwargs):
+  &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(spammy, args, spam_key, kwargs)
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Let's call it with a couple of different combinations:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;spam_new(&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;, foo=&lt;span style="color: #0000FF"&gt;30&lt;/span&gt;)                &lt;span style="color: #008800; font-style: italic"&gt;# 1 (2, 3) spam {&amp;#39;foo&amp;#39;: 30}&lt;/span&gt;
+spam_new(&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;, foo=&lt;span style="color: #0000FF"&gt;30&lt;/span&gt;, spam_key=&lt;span style="color: #0000FF"&gt;30&lt;/span&gt;)   &lt;span style="color: #008800; font-style: italic"&gt;# 1 (2, 3) 30 {&amp;#39;foo&amp;#39;: 30}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;As you can see, in both calls, &lt;code&gt;*args&lt;/code&gt; caught &lt;code&gt;(2, 3)&lt;/code&gt; since &lt;code&gt;1&lt;/code&gt; was assigned to the first positional parameter &lt;code&gt;spammy&lt;/code&gt;. In the second call, &lt;code&gt;**kwargs&lt;/code&gt; caught &lt;code&gt;foo=30&lt;/code&gt; but not &lt;code&gt;spam_key=30&lt;/code&gt; since &lt;code&gt;spam_key&lt;/code&gt; corresponds to a keyword parameter with the same name.&lt;/p&gt;
+&lt;p&gt;Finally, some closing notes:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;You can only use &lt;code&gt;*args&lt;/code&gt; and &lt;code&gt;**kwargs&lt;/code&gt; once in a function definition. If you think about it, using them more than once is very ambiguous as to what exactly should happen.&lt;/li&gt;
+&lt;li&gt;Positioning is important. &lt;code&gt;def foo(*args, b)&lt;/code&gt; and &lt;code&gt;def foo(b, *args)&lt;/code&gt; behave very differently. Using &lt;code&gt;def foo(*args, b)&lt;/code&gt; you won't be able to supply a value for &lt;code&gt;b&lt;/code&gt; (which you might be able to using the &lt;code&gt;inspect&lt;/code&gt; module though I haven't tried that.)&lt;/li&gt;
+&lt;li&gt;Any parameter that follows an &lt;code&gt;*args&lt;/code&gt; parameter &lt;em&gt;must&lt;/em&gt; be supplied as a keyword argument.&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; foo(*args, c, d):
+  &lt;span style="color: #0000FF"&gt;&amp;quot;&amp;quot;&amp;quot; c and d can only be passed as keyword arguments &amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;This also makes sense. Any non-keyword argument would be grabbed by &lt;code&gt;*args&lt;/code&gt;.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;If you supply a default value for a parameter before &lt;code&gt;*args&lt;/code&gt; (i.e a positional parameter), all parameters that are defined after it must also have default values.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;That list wasn't exhaustive but it should encompass most of what you'd need to know.&lt;/p&gt;
+&lt;h4&gt;Other callables&lt;/h4&gt;
+&lt;p&gt;I might have been using the term 'function' in the previous section but, everything I said also applies to methods and anonymous, i.e lambda, functions.&lt;/p&gt;
+&lt;p&gt;Methods are basically functions attached to objects so as you'd expect the behavior is exactly the same. If you're using &lt;code&gt;*args&lt;/code&gt; just be careful with the &lt;code&gt;self&lt;/code&gt; parameter. You &lt;em&gt;will&lt;/em&gt; catch that too if you don't define your method with at least one positional parameter.&lt;/p&gt;
+&lt;p&gt;Lambda functions too behave the same way, all they are are functions with the difference that the executable body is comprised of a single expression.&lt;/p&gt;
+&lt;h3&gt;LHS of Assignments:&lt;/h3&gt;
+&lt;p&gt;&lt;sup&gt;&lt;a href="https://www.python.org/dev/peps/pep-3132/"&gt;PEP 3132 -- Extended Iterable Unpacking&lt;/a&gt; | &lt;strong&gt;Pythons: &amp;gt;= 3.0&lt;/strong&gt;&lt;/sup&gt;&lt;/p&gt;
+&lt;p&gt;Aaand PEP 3132 came along and extended the syntax (loosened it) allowing the
+star to be used in other instances of assignment. The question now becomes,
+where do we have assignments? As we'll see, apart from function calls, we have
+a couple more instances of implicit assignment. Let's start with the explicit
+case though which is the assignment statement.&lt;/p&gt;
+&lt;p&gt;Before doing that, a side-note: you can't have &lt;code&gt;**&lt;/code&gt; on the LHS of the following assignments. I'm pretty sure this is because a) assignment is a statement and not an expression and b) even if it was an expression you'd get really ugly assignment statements.&lt;/p&gt;
+&lt;h4&gt;Assignment Statement&lt;/h4&gt;
+&lt;p&gt;&lt;a href="https://docs.python.org/3/reference/simple_stmts.html#assignment-statements"&gt;Assignment statements&lt;/a&gt; are well known to most people. We have a list of target names on the LHS of the &lt;code&gt;=&lt;/code&gt; symbol and an expression on the RHS. Prior to PEP 3132 and Python 3, we couldn't really do much with the LHS: specify the names to be bound to the values and be done. After PEP 3132 we have the opportunity to use &lt;code&gt;*&lt;/code&gt; to catch all values that do not have a corresponding name to be assigned to.&lt;/p&gt;
+&lt;p&gt;Using this we can easily split iterables into parts:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;head, *rest = [&lt;span style="color: #0000FF"&gt;20&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;30&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;40&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;50&lt;/span&gt;]
+&lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(head, rest)  &lt;span style="color: #008800; font-style: italic"&gt;# 20 [30, 40, 50]&lt;/span&gt;
+*rest, tail = [&lt;span style="color: #0000FF"&gt;20&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;30&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;40&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;50&lt;/span&gt;]
+&lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(rest, tail)  &lt;span style="color: #008800; font-style: italic"&gt;# [20, 30, 40] 50&lt;/span&gt;
+head, *middle, *tail = [&lt;span style="color: #0000FF"&gt;20&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;30&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;40&lt;/span&gt;]
+&lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(head, middle, tail)  &lt;span style="color: #008800; font-style: italic"&gt;# 20 [30] 40&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Pretty cool. As you can probably tell by the output of the &lt;code&gt;print&lt;/code&gt; calls, the
+result of packing here is a &lt;code&gt;list&lt;/code&gt; object. This is stated in the documentation of the assignment statement:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;If the target list contains one target prefixed with an asterisk, called a “starred” target: The object must be an iterable with at least as many items as there are targets in the target list, minus one. The first items of the iterable are assigned, from left to right, to the targets before the starred target. The final items of the iterable are assigned to the targets after the starred target. A list of the remaining items in the iterable is then assigned to the starred target (the list can be empty).&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Here, &lt;em&gt;target list&lt;/em&gt; refers to the LHS of the assignment and &lt;em&gt;target&lt;/em&gt; refers to each of the names found in the target list; &lt;em&gt;star target&lt;/em&gt; is a target prefixed by a star; he's the one we're talking about.  &lt;em&gt;object&lt;/em&gt; refers to the expression on the RHS. The key sentence that clarifies what the result is is the last one:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;A list of the remaining items in the iterable is then assigned to the starred target (the list can be empty).&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;The list is empty when the number of items in the iterable object on the RHS is one less than the number of targets on the LHS. Values are first assigned for the non-star targets on the LHS as the quoted text states. So, for example:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;first, second, third, *rest, final = [&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;4&lt;/span&gt;]
+&lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(first, second, third, rest, final)  &lt;span style="color: #008800; font-style: italic"&gt;# 1 2 3 [] 4&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;First &lt;code&gt;first&lt;/code&gt; was assigned to &lt;code&gt;1&lt;/code&gt;, then &lt;code&gt;second&lt;/code&gt; to &lt;code&gt;2&lt;/code&gt;; &lt;code&gt;third&lt;/code&gt; was assigned to &lt;code&gt;3&lt;/code&gt; and then, finally, &lt;code&gt;final&lt;/code&gt; to &lt;code&gt;4&lt;/code&gt;. Python then sees that no more values from the object on the RHS exist and assigns &lt;code&gt;rest&lt;/code&gt; to the empty list.&lt;/p&gt;
+&lt;p&gt;So, can you do a wild and freaky conversion from tuple to list by only using the star target in the LHS of the assignment? Let's experiment:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;*values = (&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;4&lt;/span&gt;)
+
+SyntaxError: starred assignment target must be &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; a list &lt;span style="font-weight: bold"&gt;or&lt;/span&gt; tuple
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;That didn't go so well. So, what's the issue here? Thankfully, the syntax error is pretty illuminating: &lt;em&gt;The starred assignment target must be in a &lt;code&gt;list&lt;/code&gt; or &lt;code&gt;tuple&lt;/code&gt;&lt;/em&gt;.. hm, ok:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;[*values] = [&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;]  &lt;span style="color: #008800; font-style: italic"&gt;# put it in a list&lt;/span&gt;
+&lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(values)  &lt;span style="color: #008800; font-style: italic"&gt;# [1, 2, 3]&lt;/span&gt;
+*values, = [&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;]   &lt;span style="color: #008800; font-style: italic"&gt;# NOTE: trailing comma puts it in a tuple&lt;/span&gt;
+&lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(values)  &lt;span style="color: #008800; font-style: italic"&gt;# [1, 2, 3]&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;I'm not sure nor have I been able to find out why this is the way it is but, I'm confident there was a solid reason.&lt;/p&gt;
+&lt;p&gt;Before moving on, there's an additional nice feature which is a result of assignment being recursively defined. Lets say you have a list of lists and you'd like to split the first two sub-lists of this list into head-rest parts and assign the untouched sub-lists to another name. How would you go about doing it? Why you'd want to do this is another question. One obvious solution would be to just index and slice it:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;ll = [[&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;4&lt;/span&gt;], [&lt;span style="color: #0000FF"&gt;4&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;6&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;7&lt;/span&gt;], [&lt;span style="color: #0000FF"&gt;22&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;21&lt;/span&gt;], [&lt;span style="color: #0000FF"&gt;22&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;24&lt;/span&gt;]]
+head1, *rest1 = ll[&lt;span style="color: #0000FF"&gt;0&lt;/span&gt;]  &lt;span style="color: #008800; font-style: italic"&gt;# split first&lt;/span&gt;
+head2, *rest2 = ll[&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;]  &lt;span style="color: #008800; font-style: italic"&gt;# split second&lt;/span&gt;
+rest = ll[&lt;span style="color: #0000FF"&gt;2&lt;/span&gt;:]          &lt;span style="color: #008800; font-style: italic"&gt;# keep rest&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This does the trick but StackOverflow has taught me that if you can do this in a single line (a one-liner) you get extra internet points. So, let's do just that:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #008800; font-style: italic"&gt;# equivalent to the snippet above.&lt;/span&gt;
+(head1, *rest1), (head2, *rest2), *rest = ll
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;I'm not really advocating using this in assignment statements since indexing and slicing is arguably much more clear. It might be more useful in other contexts such as for loops. Either way, this just goes to show how packing can also be nested. If you want to do this for showing-off purposes then just remember that you need to match the &lt;em&gt;structure&lt;/em&gt; of the iterable on the RHS in order to pack successfully on the LHS; using a very extreme example:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;l = [[[[[[[[[[&lt;span style="color: #0000FF"&gt;10&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;10&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;10&lt;/span&gt;]]]]]]]]]]
+[[[[[[[[[[head, *rest]]]]]]]]]] = l
+&lt;span style="color: #008800; font-style: italic"&gt;# or, using tuples instead of lists to match the structure:&lt;/span&gt;
+((((((((((head, *rest),),),),),),),),),) = l
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;isn't that pretty? Both statements do the same thing, &lt;code&gt;head&lt;/code&gt; is assigned to &lt;code&gt;10&lt;/code&gt; while &lt;code&gt;rest&lt;/code&gt; has a list with &lt;code&gt;[10, 10]&lt;/code&gt;. &lt;code&gt;[]&lt;/code&gt; or &lt;code&gt;()&lt;/code&gt; can be both be used with the same effect though using &lt;code&gt;()&lt;/code&gt; leads to this quirky syntax because &lt;code&gt;(a) == a&lt;/code&gt;, you need to use the comma's to indicate that you have single element tuples. (Try removing the commas, you won't get a &lt;code&gt;SyntaxError&lt;/code&gt; but you also won't get the 'expected' result.)&lt;/p&gt;
+&lt;h4&gt;The for statement&lt;/h4&gt;
+&lt;p&gt;For loops are another well known statement. Besides their looping abilities, what's interesting about them is that they also contain an assignment, an implicit one, but there nonetheless. &lt;code&gt;for&lt;/code&gt; loops can be simplistically viewed as follows:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;for&lt;/span&gt; LHS &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; RHS:
+  &lt;span style="color: #008800; font-style: italic"&gt;# do things with LHS names&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;When Python executes a &lt;code&gt;for&lt;/code&gt; loop it binds values from the elements of the &lt;code&gt;RHS&lt;/code&gt; iterable to the names on the &lt;code&gt;LHS&lt;/code&gt;. This basically means that all the things presented in the previous section apply here too:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;for&lt;/span&gt; head, *rest &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; [[&lt;span style="color: #0000FF"&gt;20&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;30&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;40&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;50&lt;/span&gt;]]:
+  &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(head, tail)
+&lt;span style="color: #000080; font-weight: bold"&gt;for&lt;/span&gt; *rest, tail &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; [[&lt;span style="color: #0000FF"&gt;20&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;30&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;40&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;50&lt;/span&gt;]]:
+  &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(rest, tail)
+&lt;span style="color: #000080; font-weight: bold"&gt;for&lt;/span&gt; head, *middle, tail &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; [[&lt;span style="color: #0000FF"&gt;20&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;30&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;40&lt;/span&gt;]]:
+  &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(head, middle, tail)
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;These all print the &lt;em&gt;same thing&lt;/em&gt; their assignment statement counterparts do.&lt;/p&gt;
+&lt;p&gt;Why the extra square brackets you might be wondering? Well, for loops are based on iterables, they work by going through each element on the RHS iterable and performing an assignment to the names on the LHS. Translating them to a slightly equivalent while loop can make this operation clearer. Lets take the first &lt;code&gt;for&lt;/code&gt; loop from the previous code snippet where the LHS is &lt;code&gt;head, *rest&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; for_loop(RHS):
+  &lt;span style="color: #0000FF"&gt;&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+&lt;span style="color: #0000FF"&gt;  Not a strict translation of a for-loop but&lt;/span&gt;
+&lt;span style="color: #0000FF"&gt;  close enough to get the point across&lt;/span&gt;
+&lt;span style="color: #0000FF"&gt;  &amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+  index = &lt;span style="color: #0000FF"&gt;0&lt;/span&gt;
+  &lt;span style="color: #000080; font-weight: bold"&gt;while&lt;/span&gt; True:
+    &lt;span style="color: #000080; font-weight: bold"&gt;try&lt;/span&gt;:
+      value = RHS[index]
+    &lt;span style="color: #000080; font-weight: bold"&gt;except&lt;/span&gt; IndexError &lt;span style="color: #000080; font-weight: bold"&gt;as&lt;/span&gt; e:
+      &lt;span style="color: #000080; font-weight: bold"&gt;break&lt;/span&gt;
+    &lt;span style="color: #008800; font-style: italic"&gt;# LHS&lt;/span&gt;
+    head, *rest = value
+    &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(head, tail)
+    index += &lt;span style="color: #0000FF"&gt;1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Now think about what happens when we pass in &lt;code&gt;RHS = [20, 30, 40, 50]&lt;/code&gt; versus passing in &lt;code&gt;RHS = [[20, 30, 40, 50]]&lt;/code&gt;. Try executing this function and see the error message.&lt;/p&gt;
+&lt;p&gt;There's some other minor differences between the RHS in for loops with those found in assignment statements but that's beyond the scope of this post. All you need to care about is that you can pack in for-loops the same way you pack in assignment statements, you just add an extra pair of brackets or a trailing comma (making it a single element tuple) to the RHS:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #008800; font-style: italic"&gt;# Note extra comma in ll (why is it there?)&lt;/span&gt;
+&lt;span style="color: #000080; font-weight: bold"&gt;for&lt;/span&gt; (head1, *rest1), (head2, *rest2), *rest &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; ll,:
+    &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(head1, rest1, head2, rest2, rest)
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;and this prints out:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #0000FF"&gt;1&lt;/span&gt; [&lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;4&lt;/span&gt;] &lt;span style="color: #0000FF"&gt;4&lt;/span&gt; [&lt;span style="color: #0000FF"&gt;6&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;7&lt;/span&gt;] [[&lt;span style="color: #0000FF"&gt;22&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;21&lt;/span&gt;], [&lt;span style="color: #0000FF"&gt;22&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;24&lt;/span&gt;]]
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;as you'd expect it to.&lt;/p&gt;
+&lt;h4&gt;The with statement&lt;/h4&gt;
+&lt;p&gt;Let me preface this by saying don't do this. I really have never seen this being done someplace in the wild and can't think of a reason why it should. Having said that, let's go ahead and abuse the &lt;code&gt;as&lt;/code&gt; clause of &lt;code&gt;with&lt;/code&gt; statements.&lt;/p&gt;
+&lt;p&gt;I won't go ahead and explain what exactly context managers are for, that is also a topic for another post. If you aren't really familiar with them, just skip this section and move on. Those who know and want to see something stupid being done, keep on reading.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;with&lt;/code&gt; statement offers a restricted form of assignment. I won't get into too much detail here too because explaining the difference between &lt;code&gt;expression&lt;/code&gt; and &lt;code&gt;expression_list&lt;/code&gt; in the context of Pythons grammar will result in too much of a sideshow. With that being said, let's create a mentally challenged context manager:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;class&lt;/span&gt; SillyContext:
+  &lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; __enter__(*_, **__):
+    &lt;span style="color: #0000FF"&gt;&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+&lt;span style="color: #0000FF"&gt;    Use &amp;#39;_&amp;#39; and &amp;#39;__&amp;#39; to indicate we ignore all&lt;/span&gt;
+&lt;span style="color: #0000FF"&gt;    arguments passed, positional and keyword&lt;/span&gt;
+&lt;span style="color: #0000FF"&gt;    &amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+    &lt;span style="color: #000080; font-weight: bold"&gt;return&lt;/span&gt; [&lt;span style="color: #0000FF"&gt;&amp;#39;Yes,&amp;#39;&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;&amp;#39;It is&amp;#39;&lt;/span&gt;]
+
+  &lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; __exit__(*_, **__):
+    &lt;span style="color: #000080; font-weight: bold"&gt;return&lt;/span&gt; True
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;So we have this absolutely amazing context manager that returns a list when you enter it. Marvelous. Let's now abuse the syntax:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;with&lt;/span&gt; SillyContext() &lt;span style="color: #000080; font-weight: bold"&gt;as&lt;/span&gt; [this, *is_very_stupid]:
+  &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(this, &lt;span style="color: #0000FF"&gt;&amp;quot;&amp;quot;&lt;/span&gt;.join(is_very_stupid))
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Which, if you execute it, prints out &lt;code&gt;Yes, It is&lt;/code&gt;; so, SO useful. The gist of what goes on here is exactly the same. We write out the names we want to keep, which is &lt;code&gt;this&lt;/code&gt; here, and pack the rest in a list &lt;code&gt;is_very_stupid&lt;/code&gt; which we denote by prefixing it with a star.&lt;/p&gt;
+&lt;p&gt;Anyway, that's all I've found for packing. If you stumble upon any other cases that I might have missed, don't be shy to shout them at me through electronic means.&lt;/p&gt;
+&lt;h2&gt;Unpacking&lt;/h2&gt;
+&lt;p&gt;Let us now move on to unpacking. Unpacking is basically the evil twin of packing if that evil twin wasn't really so evil, just misunderstood. Sillyness aside, I wasn't able to find a PEP that introduced unpacking. Knowing that it first appeared in &lt;a href="https://docs.python.org/3/reference/expressions.html#calls"&gt;call expressions&lt;/a&gt;, I was able to use my &lt;a href="https://www.python.org/doc/versions/"&gt;great detective skills&lt;/a&gt; to see that it must have appeared in Python 2.2 for the first time. That release was a pretty significant one if you take a look at &lt;a href="https://www.python.org/dev/peps/pep-0251/#new-features-for-python-2-2"&gt;what was added&lt;/a&gt; so, this finding isn't surprising.&lt;/p&gt;
+&lt;p&gt;As in the case of packing, we will first look at functions, specifically, calling them. Then, we'll take a look at what PEP 448 gave us for the RHS of assignments and more generally, displays. Finally, a small note about the future of unpacking.&lt;/p&gt;
+&lt;h3&gt;Function calls&lt;/h3&gt;
+&lt;p&gt;So, after looking at function definitions and the packing that is done when you prefix a parameter with a single or double star, lets shift our attention to the unpacking that you can perform when you call a function. The information presented here obviously applies for methods, lambdas and generally, callables.&lt;/p&gt;
+&lt;p&gt;First, let's take a look at what the &lt;a href="https://docs.python.org/3/reference/expressions.html#calls"&gt;language reference&lt;/a&gt; says about these. Regarding &lt;code&gt;*iterable&lt;/code&gt; unpacking during calls:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;If the syntax &lt;code&gt;*expression&lt;/code&gt; appears in the function call, expression must evaluate to an iterable. Elements from these iterables are treated as if they were additional positional arguments. For the call &lt;code&gt;f(x1, x2, *y, x3, x4)&lt;/code&gt;, if y evaluates to a sequence y1, …, yM, this is equivalent to a call with M+4 positional arguments x1, x2, y1, …, yM, x3, x4.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;This is pretty straight-forward: &lt;code&gt;expression&lt;/code&gt; &lt;em&gt;must&lt;/em&gt; evaluate to an iterable and, what happens, is that the elements of that iterable are treated as if they were additional positional arguments; the call &lt;code&gt;f(x1, x2, *y, x3, x4)&lt;/code&gt; where &lt;code&gt;y=[y1, y2, ..., yM]&lt;/code&gt; for example, is equivalent to &lt;code&gt;f(x1, x2, y1, y2, ..., yM, x3, x4)&lt;/code&gt;. If the expression isn't an iterable, catastrophe will befall you.&lt;/p&gt;
+&lt;p&gt;A simple example using most of the available built-in iterables:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; it_unpacked(a, b, c):
+  &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(a, b, c)
+&lt;span style="color: #008800; font-style: italic"&gt;# all equivalent to: it_unpacked(1, 2, 3)&lt;/span&gt;
+&lt;span style="color: #008800; font-style: italic"&gt;# 1 assigned to a, 2 to b, 3 to c.&lt;/span&gt;
+it_unpacked(*[&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;])  &lt;span style="color: #008800; font-style: italic"&gt;# unpack list&lt;/span&gt;
+it_unpacked(*(&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;))  &lt;span style="color: #008800; font-style: italic"&gt;# unpack tuple&lt;/span&gt;
+it_unpacked(*{&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;})  &lt;span style="color: #008800; font-style: italic"&gt;# unpack set&lt;/span&gt;
+d = {&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;:&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;:&lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;:&lt;span style="color: #0000FF"&gt;3&lt;/span&gt;}
+it_unpacked(*d)          &lt;span style="color: #008800; font-style: italic"&gt;# unpack dict&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The last case is noteworthy: A dictionary is also iterable and when iterated through it yields its keys. Using &lt;code&gt;*d&lt;/code&gt; is shorthand for &lt;code&gt;*d.keys()&lt;/code&gt; which results in the values &lt;code&gt;1&lt;/code&gt;, &lt;code&gt;2&lt;/code&gt; and &lt;code&gt;3&lt;/code&gt; being assigned to &lt;code&gt;a&lt;/code&gt;, &lt;code&gt;b&lt;/code&gt; and &lt;code&gt;c&lt;/code&gt; respectively. Mappings are the only data structures that can use both &lt;code&gt;*&lt;/code&gt; and &lt;code&gt;**&lt;/code&gt; unpacking.&lt;/p&gt;
+&lt;p&gt;Obviously if you unpack an iterable that has more or less elements than the function expects, you get barked at:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;it_unpacked(*[&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;])        &lt;span style="color: #008800; font-style: italic"&gt;# missing 1 required positional arg&lt;/span&gt;
+it_unpacked(*[&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;4&lt;/span&gt;])  &lt;span style="color: #008800; font-style: italic"&gt;# unpacked takes 3 pos. args but got 4&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Unless, of course, if you use a function that has a star &lt;code&gt;*&lt;/code&gt; parameter defined. In this case, passing in &lt;em&gt;more&lt;/em&gt; arguments is fine, they are simply caught by the star parameter:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; it_unpacked2(a, b, c, *excess_args):
+  &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(a, b, c, excess_args)
+
+l = list(range(&lt;span style="color: #0000FF"&gt;20&lt;/span&gt;))
+it_unpacked2(*l)  &lt;span style="color: #008800; font-style: italic"&gt;# a is 0, b is 1, c is 2, excess_args is (3, 4, ..., 19)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;That's pretty much it for &lt;code&gt;*&lt;/code&gt; unpacking in function calls. This is basically &lt;code&gt;*&lt;/code&gt; on the RHS of an assignment and all it does is expands the values of an iterable having them intepreted as single units instead of as part of a collection.&lt;/p&gt;
+&lt;p&gt;Moving on to &lt;code&gt;**&lt;/code&gt;, the reference manual has this to say for &lt;code&gt;**mapping&lt;/code&gt; unpacking:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;If the syntax &lt;code&gt;**expression&lt;/code&gt; appears in the function call, expression must evaluate to a mapping, the contents of which are treated as additional keyword arguments. If a keyword is already present (as an explicit keyword argument, or from another unpacking), a &lt;code&gt;TypeError&lt;/code&gt; exception is raised.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Again, straight-forward: &lt;code&gt;expression&lt;/code&gt; must be a mapping and the mappings' key-value pairs are treated as additional keyword arguments to the function. The &lt;code&gt;**expression&lt;/code&gt; must follow any &lt;code&gt;*expression&lt;/code&gt; unpackings. Also, as noted here, if you supply a keyword argument explicitly and then provide one with the same name by unpacking a mapping you get a &lt;code&gt;TypeError&lt;/code&gt;. That is:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; dummy(a): &lt;span style="color: #000080; font-weight: bold"&gt;pass&lt;/span&gt;
+
+dummy(a=&lt;span style="color: #0000FF"&gt;20&lt;/span&gt;, **{&lt;span style="color: #0000FF"&gt;&amp;#39;a&amp;#39;&lt;/span&gt;: &lt;span style="color: #0000FF"&gt;30&lt;/span&gt;})      &lt;span style="color: #008800; font-style: italic"&gt;# got multiple values for keyword argument &amp;#39;a&amp;#39;&lt;/span&gt;
+&lt;span style="color: #008800; font-style: italic"&gt;# or, with PEP 448&lt;/span&gt;
+dummy(**{&lt;span style="color: #0000FF"&gt;&amp;#39;a&amp;#39;&lt;/span&gt;:&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;}, **{&lt;span style="color: #0000FF"&gt;&amp;#39;a&amp;#39;&lt;/span&gt;: &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;})  &lt;span style="color: #008800; font-style: italic"&gt;# got multiple values for keyword argument &amp;#39;a&amp;#39;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This does makes some sense, what value should finally be assigned for &lt;code&gt;a&lt;/code&gt;? To be honest though, I wouldn't &lt;em&gt;really&lt;/em&gt; mind if the behavior used in dictionary displays was used here: the final, rightmost keyword argument is used. Anyhow.&lt;/p&gt;
+&lt;p&gt;A &lt;code&gt;dict&lt;/code&gt;, an &lt;code&gt;OrderedDict&lt;/code&gt; or &lt;code&gt;ChainMap&lt;/code&gt; from the &lt;code&gt;collections&lt;/code&gt; library and any other user-defined mapping object can be used with &lt;code&gt;**&lt;/code&gt; to unpack keyword arguments for a function. A couple of examples with these should illustrate the
+point:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; kw_function(foo, bar=&lt;span style="color: #0000FF"&gt;20&lt;/span&gt;, spam=&lt;span style="color: #0000FF"&gt;30&lt;/span&gt;):
+    &lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(foo, bar, spam)
+
+&lt;span style="color: #008800; font-style: italic"&gt;# equivalent to kw_function(foo=20)&lt;/span&gt;
+kw_function(**{&lt;span style="color: #0000FF"&gt;&amp;#39;foo&amp;#39;&lt;/span&gt;: &lt;span style="color: #0000FF"&gt;20&lt;/span&gt;})                   &lt;span style="color: #008800; font-style: italic"&gt;# 20 20 20&lt;/span&gt;
+&lt;span style="color: #008800; font-style: italic"&gt;# equivalent to kw_function(20, bar=1, spam=3)&lt;/span&gt;
+kw_function(&lt;span style="color: #0000FF"&gt;20&lt;/span&gt;, **{&lt;span style="color: #0000FF"&gt;&amp;#39;bar&amp;#39;&lt;/span&gt;:&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;&amp;#39;spam&amp;#39;&lt;/span&gt;:&lt;span style="color: #0000FF"&gt;3&lt;/span&gt;})       &lt;span style="color: #008800; font-style: italic"&gt;# 20 1 3&lt;/span&gt;
+&lt;span style="color: #008800; font-style: italic"&gt;# other mapping structures&lt;/span&gt;
+&lt;span style="color: #000080; font-weight: bold"&gt;from&lt;/span&gt; collections &lt;span style="color: #000080; font-weight: bold"&gt;import&lt;/span&gt; OrderedDict, ChainMap
+od = OrderedDict([(&lt;span style="color: #0000FF"&gt;&amp;#39;bar&amp;#39;&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;&amp;#39;bar&amp;#39;&lt;/span&gt;)])
+&lt;span style="color: #008800; font-style: italic"&gt;# chain map is initialized by other mappings&lt;/span&gt;
+cm = ChainMap(od, {&lt;span style="color: #0000FF"&gt;&amp;#39;spam&amp;#39;&lt;/span&gt;: &lt;span style="color: #0000FF"&gt;&amp;#39;spam&amp;#39;&lt;/span&gt;})
+&lt;span style="color: #008800; font-style: italic"&gt;# equivalent to kw_function(1, bar=&amp;#39;bar&amp;#39;)&lt;/span&gt;
+kw_function(&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, **od)                         &lt;span style="color: #008800; font-style: italic"&gt;# 1 bar 30&lt;/span&gt;
+&lt;span style="color: #008800; font-style: italic"&gt;# equivalent to kw_function(1, bar=&amp;#39;bar&amp;#39;, spam=&amp;#39;spam&amp;#39;)&lt;/span&gt;
+kw_function(&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, **cm)                         &lt;span style="color: #008800; font-style: italic"&gt;# 1 bar spam&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;As with the single star unpacking case, if you unpack a mapping that contains a key value that does not match a parameter name, you get an error unless you define your function with a &lt;code&gt;**kwargs&lt;/code&gt; parameter to catch it. You can play around and do this yourself :-)&lt;/p&gt;
+&lt;h4&gt;Unpacking multiple times&lt;/h4&gt;
+&lt;p&gt;&lt;sup&gt;&lt;a href="https://www.python.org/dev/peps/pep-0448/"&gt;PEP 448 -- Additional Unpacking Generalizations&lt;/a&gt; | &lt;strong&gt;Pythons: &amp;gt;= 3.5&lt;/strong&gt;&lt;/sup&gt;&lt;/p&gt;
+&lt;p&gt;This is one of the features PEP 448 brought to the party. Basically, prior to Python 3.5 you could only have one &lt;code&gt;*&lt;/code&gt; unpacking and one &lt;code&gt;**&lt;/code&gt; unpacking when performing a function call. Something like this:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;&lt;span style="color: #000080; font-weight: bold"&gt;def&lt;/span&gt; f(*__, **__): &lt;span style="color: #000080; font-weight: bold"&gt;pass&lt;/span&gt;
+
+f(*[&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;], *[&lt;span style="color: #0000FF"&gt;2&lt;/span&gt;])
+&lt;span style="color: #008800; font-style: italic"&gt;# or&lt;/span&gt;
+f(**{&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;:&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;}, **{&lt;span style="color: #0000FF"&gt;2&lt;/span&gt;:&lt;span style="color: #0000FF"&gt;2&lt;/span&gt;})
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;raised a &lt;code&gt;SyntaxError&lt;/code&gt;. This means that, if you have values you need to pass along to a function that are contained in two different iterables or mappings, you'd need to join these together before unpacking them. This was deemed unnecessary and rightfully so. Since Python 3.5 those calls now execute as expected.&lt;/p&gt;
+&lt;p&gt;For those interested, you can unpack as many times as you want as long as the total number of arguments supplied to the function don't exceed &lt;code&gt;255&lt;/code&gt;. I know, that sucks. &lt;code&gt;255&lt;/code&gt; is just too small of a number for some functions that need to do absolutely everything in the world all at once including emailing themselves to the author of Clean Code in order to haunt him with their existence.&lt;/p&gt;
+&lt;h3&gt;Unpacking in list, tuple and dict displays.&lt;/h3&gt;
+&lt;p&gt;&lt;sup&gt;&lt;a href="https://www.python.org/dev/peps/pep-0448/"&gt;PEP 448 -- Additional Unpacking Generalizations&lt;/a&gt; | &lt;strong&gt;Pythons: &amp;gt;= 3.5&lt;/strong&gt;&lt;/sup&gt;&lt;/p&gt;
+&lt;p&gt;PEP 448's contributions weren't only limited to allowing multiple unpackings in function calls. The additional feature we got was being able to unpack on the RHS of assignment expressions. Well, the exact feature we got was being able to unpack inside &lt;em&gt;displays&lt;/em&gt; which will be explained shortly. The distinction between RHS and LHS is a convenient one because we are in full control over what happens at the RHS. Also, you'll mostly encounter unpackings in displays at the RHS of assignments.&lt;/p&gt;
+&lt;p&gt;Moving on to displays now. &lt;a href="https://docs.python.org/3/reference/expressions.html#displays-for-lists-sets-and-dictionaries"&gt;Displays are special syntax Python&lt;/a&gt; provides in order for us to create lists, sets, dictionaries and tuples. You've probably seen these but let's enumerate them here for completeness:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;[v1, v2, ..., vN]&lt;/code&gt; for list displays. For example: &lt;code&gt;[1, 2, 3]&lt;/code&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;{v1, v2, ..., vN}&lt;/code&gt; for set displays. For example: &lt;code&gt;{1, 2, 3}&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;{k1:v1, k2:v2, ..., kN:vN}&lt;/code&gt; for dictionary displays. For example: &lt;code&gt;{1:1, 2:2, 3:3}&lt;/code&gt;. Dictionaries and sets share the same bracket form but you can tell them apart from what they contain. A series of key/value pairs creates a dictionary, a series of values creates a set.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;v1, v2, v3&lt;/code&gt; or, optionally, &lt;code&gt;(v1, v2, v3)&lt;/code&gt; for tuple displays. For example: &lt;code&gt;1, 2, 3&lt;/code&gt; or &lt;code&gt;(1, 2, 3)&lt;/code&gt;. Parentheses do not create tuples, commas do. This can be seen by checking the type of the variable &lt;code&gt;a&lt;/code&gt; after the assignment &lt;code&gt;a = 1,&lt;/code&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Displays also have a second flavor called &lt;em&gt;comprehensions&lt;/em&gt; but these were not altered with PEP 448; see the &lt;strong&gt;Future&lt;/strong&gt; section of this post for a bit more on them.&lt;/p&gt;
+&lt;p&gt;Moving on, what PEP 448 gave us with displays, is the ability to unpack &lt;em&gt;inside&lt;/em&gt; them. Say you have a list &lt;code&gt;l1&lt;/code&gt; with a couple of elements and another list &lt;code&gt;l2&lt;/code&gt; with some other elements. What you would usually do if you wanted to add these together (in an eager way -- I'm looking at you person who is thinking of &lt;code&gt;itertools&lt;/code&gt;) is:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;l3 = l1 + l2
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;What you can now magically do in order to join these is just unpack in a list display:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;l3 = [*l1, *l2]
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;and this does get some points because it does execute faster than its counterpart and it's also a bit more clear what is going on: we know both &lt;code&gt;l1&lt;/code&gt; and &lt;code&gt;l2&lt;/code&gt; are iterable objects and that we want a list with their elements.&lt;/p&gt;
+&lt;p&gt;What sets it apart, though, is seen in the case where you have one iterable of type &lt;code&gt;A&lt;/code&gt; (say, a list) and another of type &lt;code&gt;B&lt;/code&gt; (say, a set). In this case, using &lt;code&gt;+&lt;/code&gt; blows up because you're trying to add two objects of different types. Unpacking works just fine though because all it cares about is if the objects in question are iterable. For example:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;l = [&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;]
+s = {&lt;span style="color: #0000FF"&gt;4&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;5&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;6&lt;/span&gt;}
+l3 = l + s      &lt;span style="color: #008800; font-style: italic"&gt;# TypeError, hope you enjoy it&lt;/span&gt;
+l3 = [*l, *s]   &lt;span style="color: #008800; font-style: italic"&gt;# [1, 2, 3, 4, 5, 6]&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;So you can basically unpack any object as long as &lt;em&gt;it supports iteration&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;Depending on the type of brackets you use (or their absence) you get different objects back. As seen previously, using &lt;code&gt;[]&lt;/code&gt; results in a list object. As you'd expect, for sets, the curly brackets &lt;code&gt;{}&lt;/code&gt; are used. Finally, tuples are created if you don't use &lt;code&gt;[]&lt;/code&gt; or &lt;code&gt;{}&lt;/code&gt;. For example:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;l = [&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;4&lt;/span&gt;]
+l1 = [*l]  &lt;span style="color: #008800; font-style: italic"&gt;# list (shallow copy of list l)&lt;/span&gt;
+s1 = {*l}  &lt;span style="color: #008800; font-style: italic"&gt;# set  (filter out duplicates)&lt;/span&gt;
+t1 = *l,   &lt;span style="color: #008800; font-style: italic"&gt;# tuple (w/o parentheses)&lt;/span&gt;
+t2 = (*l,) &lt;span style="color: #008800; font-style: italic"&gt;# tuple (with parentheses)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Remember the fourth line (&lt;code&gt;t1 = *l,&lt;/code&gt;) because it generally confuses people. A single trailing comma will create a tuple which you then unpack &lt;em&gt;into&lt;/em&gt;. The result is &lt;code&gt;(1, 2, 3, 4)&lt;/code&gt; which is then assigned to &lt;code&gt;t1&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;What about &lt;code&gt;t = *1,&lt;/code&gt;? Any idea what this might do? If you guessed a &lt;code&gt;TypeError&lt;/code&gt; then congrats, hope you're happy. This is one of the cases where you need to use parentheses to group things because &lt;code&gt;*&lt;/code&gt; is applied to &lt;code&gt;1&lt;/code&gt; and not &lt;code&gt;1,&lt;/code&gt; so:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;t = *(&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;,)
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Which is also an error. What's missing here? Why, an extra comma! &lt;code&gt;*(1,)&lt;/code&gt; on its own is &lt;em&gt;not&lt;/em&gt; a display. A display needs to use &lt;code&gt;[]&lt;/code&gt; or &lt;code&gt;{}&lt;/code&gt; or commas, you unpack &lt;em&gt;in&lt;/em&gt; displays. The following all will work:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;t = [*(&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;,)]  &lt;span style="color: #008800; font-style: italic"&gt;# list  [1]&lt;/span&gt;
+t = {*(&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;,)}  &lt;span style="color: #008800; font-style: italic"&gt;# set   {1}&lt;/span&gt;
+t = *(&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;,),   &lt;span style="color: #008800; font-style: italic"&gt;# tuple (1,)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Finally, let's talk about dictionary displays. Like we previously talked, when it comes to using the double star you'll need to provide a mapping. Anything else simply fails and makes you feel bad. As you'd expect, all this does is add the key/value pairs from the unpacked dictionary into the new dictionary:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;d = {&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;: &lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;: &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;}
+d1 = {&lt;span style="color: #0000FF"&gt;3&lt;/span&gt;:&lt;span style="color: #0000FF"&gt;3&lt;/span&gt;, **d}
+&lt;span style="color: #000080; font-weight: bold"&gt;print&lt;/span&gt;(d1)   &lt;span style="color: #008800; font-style: italic"&gt;# {3: 3, 1: 1, 2: 2}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;You can, of course, unpack as many mappings as you'd like. If there's one or more keys with the same hash value the rightmost key will be retained:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;d = {&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;: &lt;span style="color: #0000FF"&gt;1&lt;/span&gt;, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;: &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;}
+d1 = {&lt;span style="color: #0000FF"&gt;1&lt;/span&gt;: &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;, **d}         &lt;span style="color: #008800; font-style: italic"&gt;# 1:2 gets replaced&lt;/span&gt;
+d2 = {**d, **d1, &lt;span style="color: #0000FF"&gt;2&lt;/span&gt;: &lt;span style="color: #0000FF"&gt;3&lt;/span&gt;}   &lt;span style="color: #008800; font-style: italic"&gt;# 1:2 and 2:2 get replaced.&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;And that's basically it for dictionaries; once you get the gist of &lt;code&gt;*&lt;/code&gt; they are really a logical equivalent.&lt;/p&gt;
+&lt;h3&gt;Future&lt;/h3&gt;
+&lt;p&gt;While discussing PEP 448, the question of unpacking in comprehensions was brought up. That is, should the language allow this to be done:&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;l = [[*range(&lt;span style="color: #0000FF"&gt;10&lt;/span&gt;)], [*range(&lt;span style="color: #0000FF"&gt;10&lt;/span&gt;)]]
+l2 = [*subl &lt;span style="color: #000080; font-weight: bold"&gt;for&lt;/span&gt; subl &lt;span style="font-weight: bold"&gt;in&lt;/span&gt; l]
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;If you execute this with Pythons &amp;lt;= 3.7 (at the time of writing), you'll find out that no, this can't be done. A &lt;code&gt;SyntaxError&lt;/code&gt; telling you off is seen instead. If you need a bit of detail you can take a look at &lt;a href="https://stackoverflow.com/a/41251957/4952130"&gt;this answer&lt;/a&gt; I gave on Stack Overflow.&lt;/p&gt;
+&lt;p&gt;Take note that, as I point out in that answer, this feature has not been ruled out for future Pythons. It's something we might see later on when it's clarified what unpacking in comprehensions should mean.&lt;/p&gt;
+&lt;hr /&gt;
+&lt;h3&gt;Check it&lt;/h3&gt;
+&lt;p&gt;This is an easy way to see if you've understood what goes on. Take a look at the snippet and try and describe what happens in each of these cases.&lt;/p&gt;
+&lt;div class="codehilite" style="background: #ffffff"&gt;&lt;pre style="line-height: 125%"&gt;&lt;span&gt;&lt;/span&gt;it = [*range(&lt;span style="color: #0000FF"&gt;10&lt;/span&gt;)]
+*elements, = it
+elements2 = *it,
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Before executing see if you can correctly identify what the resulting types of &lt;code&gt;elements&lt;/code&gt; will be.&lt;/p&gt;</content><category term="Python"></category></entry><entry><title>Python Easter Eggs</title><link href="https://dimitrisjim.github.io/python-easter-eggs.html" rel="alternate"></link><published>2018-06-24T00:00:00+03:00</published><updated>2018-06-24T00:00:00+03:00</updated><author><name>Jim Fasarakis-Hilliard</name></author><id>tag:dimitrisjim.github.io,2018-06-24:/python-easter-eggs.html</id><summary type="html">&lt;p&gt;Some hidden easter eggs found in the CPython implementation of Python.&lt;/p&gt;</summary><content type="html">&lt;p&gt;This is a small list of eggs found so far in the CPython implementation of Python. Do note that all these might not be present in other Python implementations.&lt;/p&gt;
 &lt;p&gt;Feel free to notify me if you find something that isn't here.&lt;/p&gt;
 &lt;h2&gt;What is &lt;code&gt;this&lt;/code&gt;?&lt;/h2&gt;
 &lt;p&gt;Probably the most famous of the bunch is &lt;code&gt;this&lt;/code&gt;. Importing &lt;code&gt;this&lt;/code&gt; will get you the Zen of Python which provides a nice set of rules you can obnoxiously drop on people during code reviews.&lt;/p&gt;
